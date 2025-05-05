@@ -2,7 +2,7 @@
 name = "lightning_training_template"
 version = "0.1.0"
 description = ""
-authors = ["sunny joshi <sankrantijoshi14@gmail.com>"]
+authors = ["sunny joshi <sunnyjoshi1401@gmail.com>"]
 readme = "README.md"
 packages = [{include = "src"}]
 
@@ -39,6 +39,8 @@ pytorch-lightning-bolts = "^0.3.2.post1"
 ray = {extras = ["tune"], version = "^2.22.0"}
 pytorch-lightning = "^2.2.4"
 torch = "^2.3.0"
+torchaudio
+torchvision
 
 [tool.poetry.group.style.dependencies]
 black = {version = "22.1.0", extras = ["jupyter"]}
