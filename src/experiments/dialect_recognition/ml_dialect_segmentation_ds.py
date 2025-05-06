@@ -43,19 +43,30 @@ class MLDialectSegmentation(AudioToSpectrogramConvertor):
         )
 
     def load_labels(self, input_dir: Path):
-        df = pd.read_csv(input_dir/ f"{self.mode}_segmentation.csv")
         if self.mode == "train":
             self.COLUMN_MAP["SpeakerDialect"]= "label"
+        df = pd.read_csv(input_dir/ f"{self.mode}_segmentation.csv", usecols=list(self.COLUMN_MAP.keys()))
+        df = df[~df["FileName"].str.contains("segmented")].reset_index(drop=True)
+
+        df.columns = [self.COLUMN_MAP[col] for col in df.columns]
+        df.env = df.env.map(CONSTANT_ENV)
+        df.label = df.label.map(CONSTANT_LABEL)
+
+        return df
+
+    def __len__(self):
+        return self.labels.source.nunique()
 
     def __getitem__(self, index):
 
         wv_path = self.labels.source.iloc[index]
+        print(wv_path)
         label_df = self.labels.loc[self.labels.source == wv_path].reset_index(drop=True)
 
-        wv = self.load_mono_audio(wv_path)
-        duration = self.get_audio_duration(wv_path)
+        wv = self.load_mono_audio(self.input_dir/wv_path)
+        duration = self.get_audio_duration(self.input_dir/wv_path)
 
-        self._process_audio(wv, duration, label_df, wv_path)
+        self._process_audio(wv, duration, label_df, self.input_dir/wv_path)
 
 
 if __name__=="__main__":
@@ -83,6 +94,7 @@ if __name__=="__main__":
         "--segment-duration",
         type=int,
         help="Length of an audio segment ot be processed",
+        default=5
     )
     parser.add_argument(
         "-m",
@@ -92,6 +104,7 @@ if __name__=="__main__":
         default="Train or val mode for which data is being processed"
     )
     args = parser.parse_args()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
 
     dialect_processing_ds = MLDialectSegmentation(
         input_dir=args.input_dir,

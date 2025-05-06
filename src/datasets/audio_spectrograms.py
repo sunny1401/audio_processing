@@ -29,6 +29,7 @@ class AudioToSpectrogramConvertor(Dataset):
             n_mels=self.N_MELS,
             power=2.0
         )
+        self.input_dir = input_dir
 
     @abstractmethod
     def load_labels(self, input_dir: Path):
@@ -58,10 +59,12 @@ class AudioToSpectrogramConvertor(Dataset):
 
         return waveform
 
-    def get_logmel_spectrogram(self, audio: torch.Tensor) -> torch.Tensor:
-        mel = self.mel(audio)
-        log_mel = F.amplitude_to_DB(mel, multiplier=10.0, amin=1e-10, db_multiplier=0.0)
-        return log_mel
+    def get_logmel_spectrogram(self, audio: torch.Tensor):
+        min_required = self.NNFT
+        if audio.shape[-1] < min_required:
+            pad_len = min_required - audio.shape[-1]
+            audio = torch.nn.functional.pad(audio, (0, pad_len))
+        return self.mel(audio)
 
     def _process_audio(self, wv, duration, labels: pd.DataFrame, base_path: Path):
         num_segments = int(np.ceil(duration / self.segment_duration))
