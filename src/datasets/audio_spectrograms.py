@@ -15,9 +15,9 @@ class AudioToSpectrogramConvertor(Dataset):
     N_MELS: int = 64
     NNFT: int = 1024
     HOP_LENGTH: int = 512
-    def __init__(self, input_dir: Path, output_dir: Path, segment_duration: int, sample_rate: int):
+    def __init__(self, input_dir: Path, mode: str, output_dir: Path, segment_duration: int, sample_rate: int):
 
-        self.inputs = [file for file in input_dir.glob("*.wav")]
+        self.mode = mode
         self.labels = self.load_labels(input_dir)
         self.segment_duration = segment_duration
         self.output_dir = output_dir
@@ -38,8 +38,9 @@ class AudioToSpectrogramConvertor(Dataset):
     def process_labels(self, label_path: Path):
         raise NotImplementedError
 
+    @abstractmethod
     def __len__(self):
-        return len(self.inputs)
+        raise NotImplementedError
 
     def get_audio_duration(self, path: str | Path) -> float:
         metadata = torchaudio.info(str(path))
@@ -71,27 +72,28 @@ class AudioToSpectrogramConvertor(Dataset):
             segment = wv[:, int(seg_start * self.sr): int(seg_end * self.sr)]
 
             mel_spec_segment = self.get_logmel_spectrogram(segment)  # [1, mel, time]
+            output_data = dict(spectrogram=mel_spec_segment)
+            donot_save = False
 
-            df_seg = labels[(labels["start"] >= seg_start) & (labels["end"] <= seg_end)]
+            if self.mode == "train":
+                df_seg = labels[(labels["start"] >= seg_start) & (labels["end"] <= seg_end)]
 
-            events = []
-            for _, row in df_seg.iterrows():
-                rel_start = float(row["start"] - seg_start)
-                rel_end = float(row["end"] - seg_start)
-                events.append(dict(start=rel_start, end=rel_end, label=int(row["label"])))
+                events = []
+                for _, row in df_seg.iterrows():
+                    rel_start = float(row["start"] - seg_start)
+                    rel_end = float(row["end"] - seg_start)
+                    events.append(dict(start=rel_start, end=rel_end, label=int(row["label"])))
 
-            out_path = self.output_dir / f"{base_path.stem}_seg{idx:03d}.pt"
-            torch.save({
-                "spectrogram": mel_spec_segment,  
-                "events": events                  
-            }, out_path)
+                if events:
+                    output_data["events"] = events
 
+                else:
+                    donot_save = True
+
+            if not donot_save:
+                out_path = self.output_dir / f"{base_path.stem}_seg{idx:03d}.pt"
+                torch.save(output_data, out_path)
+
+    @abstractmethod
     def __getitem__(self, index):
-        wv_path = self.inputs[index]
-        label_path = self.labels[index]
-
-        labels = self.process_labels(label_path)
-        wv = self.load_mono_audio(wv_path)
-        duration = self.get_audio_duration(wv_path)
-
-        self._process_audio(wv, duration, labels, wv_path)
+        raise NotImplementedError

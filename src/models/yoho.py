@@ -67,10 +67,10 @@ class YOHO(nn.Module):
 
         # Final reshape and 1D conv
         self.head = nn.Sequential(
-            nn.AdaptiveAvgPool2d((26, 256)),  # Match target reshape (manually done in paper)
+            nn.AdaptiveAvgPool2d((26, 256)), 
             nn.Flatten(start_dim=2),          # [B, 128, 26] → [B, 26, 128]
             nn.Conv1d(256, 6, kernel_size=1), # Final output: [B, 6, 26]
-            nn.Softmax(dim=1)                 # Optional depending on training loss
+            nn.Softmax(dim=1)                 
         )
 
     def forward(self, x):
