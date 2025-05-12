@@ -9,11 +9,16 @@ import torch
 from torch import optim
 from yacs.config import CfgNode as CN
 <<<<<<< HEAD
+<<<<<<< HEAD
 from eo_lib.pipeline.lr_scheduler import build_scheduler
 =======
 
 from src.pipeline.lr_scheduler import build_scheduler
 >>>>>>> template/main
+=======
+
+from src.pipeline.lr_scheduler import build_scheduler
+>>>>>>> 21a496a (adding data module and other changes)
 
 
 logging.basicConfig(

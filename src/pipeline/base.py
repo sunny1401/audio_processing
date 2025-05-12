@@ -1,6 +1,10 @@
 import logging
 from abc import abstractmethod
 
+from torch.utils.data import Dataset
+
+
+from arc.pipeline.base_data_module import DatasetWrapperDataModule
 from src.utils.cuda import get_device
 from src.utils.reproducibility import set_random_seed
 from src.utils.read_config import load_cfg
@@ -20,7 +24,7 @@ class Pipeline:
         self.model_cfg = load_cfg(model_cfg)
         set_random_seed(self.model_cfg.data.seed)
 
-    def _build_datamodule(self, train_ds: DataLoader, val_ds: Dataset):
+    def _build_datamodule(self, train_ds: Dataset, val_ds: Dataset):
 
         self.data_module_ins = DatasetWrapperDataModule(
                 train_dataset=train_ds,
@@ -60,7 +64,7 @@ class Pipeline:
 
         self._logger.info("Train process complete")
 
-    def setup(self):
+    def setup(self, train_ds, val_ds):
         self._build_datamodule()
         self._logger.info("Data Module Initialized")
 
