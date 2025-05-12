@@ -1,0 +1,38 @@
+name: Create PR from template update
+
+on:
+  workflow_dispatch:  # Run manually from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+
+      - name: Set up Git config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add template as remote
+        run: |
+          git remote add template https://github.com/sunny1401/training_template.git
+          git fetch template
+
+      - name: Create sync branch
+        run: |
+          git checkout -b update-from-template
+          git merge template/main --allow-unrelated-histories || true
+
+      - name: Push branch
+        run: git push origin update-from-template
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Update from template"
+          body: "This PR merges the latest changes from the template."
+          base: main
+          branch: update-from-template
