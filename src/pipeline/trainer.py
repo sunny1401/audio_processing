@@ -27,8 +27,8 @@ from ray.train.lightning import RayLightningEnvironment
 
 import torch
 from yacs.config import CfgNode as CN
-from utils.cuda import get_device
-from utils.reproducibility import set_random_seed
+from src.utils.cuda import get_device
+from src.utils.reproducibility import set_random_seed
 from src import REPO_LOCATION
 
 
@@ -90,8 +90,6 @@ class Trainer(L.Trainer):
             use_wandb_offline=use_wandb_offline,
             log_checkpoint=logging_interval,
         )
-        self.wandb_logger = None
-        self.tensorboard_logger = None
 
         super().__init__(
             accelerator=accelerator,
@@ -215,12 +213,8 @@ class HpoTrainer(Trainer):
         use_wandblogger: bool,
         use_wandb_offline: bool,
         log_checkpoint: str | bool,
-    ) -> Logger:
-
-        logger = [
-            CSVLogger(save_dir=logs_dir / "csv_logs", name=experiment_name),
-        ]
-
+    ) -> List:
+        logger = []
         try:
             if use_wandblogger:
                 wandb_dir = logs_dir / "wandb_logs"
@@ -238,10 +232,12 @@ class HpoTrainer(Trainer):
                     log_model=log_model,
                 )
                 logger.append(wandb_logger)
-                self.wandb_logger = wandb_logger
 
         except ModuleNotFoundError:
-            pass
+            logger = [
+                CSVLogger(save_dir=logs_dir / "csv_logs", name=experiment_name),
+            ]
+
 
         return logger
 
@@ -322,17 +318,10 @@ class PipelineTrainer(Trainer):
         use_wandblogger: bool,
         use_wandb_offline: bool,
         log_checkpoint: str | bool,
-    ) -> Logger:
+    ) -> List:
 
-        logger = [
-            CSVLogger(save_dir=logs_dir / "csv_logs", name=experiment_name),
-            TensorBoardLogger(
-                save_dir=logs_dir / "tensorboard",
-                name=experiment_name,
-                log_graph=False,
-            ),
-        ]
-        self.tensorboard_logger = logger[-1]
+        
+        logger = []
         try:
             if use_wandblogger:
                 wandb_dir = logs_dir / "wandb_logs"
@@ -353,7 +342,14 @@ class PipelineTrainer(Trainer):
                 self.wandb_logger = wandb_logger
 
         except ModuleNotFoundError:
-            pass
+            logger = [
+                CSVLogger(save_dir=logs_dir / "csv_logs", name=experiment_name),
+                TensorBoardLogger(
+                    save_dir=logs_dir / "tensorboard",
+                    name=experiment_name,
+                    log_graph=False,
+                ),
+            ]
 
         return logger
     
