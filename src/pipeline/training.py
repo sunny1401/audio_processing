@@ -153,16 +153,13 @@ class PretrainingPipeline(L.LightningModule):
             interval="epoch",
         )
 
-        if self._lr_scheduler_details.name == "cosine_with_plateau":
+        if self._lr_scheduler_details.name == "cosine":
+            lr_scheduler_config["frequency"] = 1
+        elif self._lr_scheduler_details.name == "cosine_with_plateau":
             lr_scheduler_config["monitor"] = f"val_{self._metric}"
-            lr_scheduler_config["mode"] = "min"
-            lr_scheduler_config["patience"] = self._lr_scheduler_details.patience
-        
-
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": lr_scheduler_config,
-        }
+            #lr_scheduler_config["mode"] = "min"
+            #lr_scheduler_config["patience"] = self._lr_scheduler_details.patience
+            lr_scheduler_config["frequency"] = 1
 
     @abstractmethod
     def forward(self, batch, batch_idx):
