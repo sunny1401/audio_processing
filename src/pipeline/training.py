@@ -8,18 +8,8 @@ import lightning as L
 import torch
 from torch import optim
 from yacs.config import CfgNode as CN
-<<<<<<< HEAD
-<<<<<<< HEAD
-from eo_lib.pipeline.lr_scheduler import build_scheduler
-=======
 
 from src.pipeline.lr_scheduler import build_scheduler
->>>>>>> template/main
-=======
-
-from src.pipeline.lr_scheduler import build_scheduler
->>>>>>> 21a496a (adding data module and other changes)
-
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -163,13 +153,11 @@ class PretrainingPipeline(L.LightningModule):
             interval="epoch",
         )
 
-        if self._lr_scheduler_details.name == "cosine":
-            lr_scheduler_config["frequency"] = 1
-        elif self._lr_scheduler_details.name == "cosine_with_plateau":
+        if self._lr_scheduler_details.name == "cosine_with_plateau":
             lr_scheduler_config["monitor"] = f"val_{self._metric}"
-            #lr_scheduler_config["mode"] = "min"
-            #lr_scheduler_config["patience"] = self._lr_scheduler_details.patience
-            lr_scheduler_config["frequency"] = 1
+            lr_scheduler_config["mode"] = "min"
+            lr_scheduler_config["patience"] = self._lr_scheduler_details.patience
+        
 
         return {
             "optimizer": optimizer,
