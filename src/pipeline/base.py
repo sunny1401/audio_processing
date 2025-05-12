@@ -4,7 +4,9 @@ from abc import abstractmethod
 from torch.utils.data import Dataset
 
 
-from arc.pipeline.base_data_module import DatasetWrapperDataModule
+from src.pipeline.base_data_module import DatasetWrapperDataModule
+from src.pipeline.trainer import PipelineTrainer
+from src.pipeline.training import PretrainingPipeline
 from src.utils.cuda import get_device
 from src.utils.reproducibility import set_random_seed
 from src.utils.read_config import load_cfg
@@ -35,7 +37,7 @@ class Pipeline:
             )
 
     @abstractmethod
-    def _build_model(self):
+    def _build_model(self) -> PretrainingPipeline:
 
         raise NotImplementedError
 
@@ -65,7 +67,7 @@ class Pipeline:
         self._logger.info("Train process complete")
 
     def setup(self, train_ds, val_ds):
-        self._build_datamodule()
+        self._build_datamodule(train_ds, val_ds)
         self._logger.info("Data Module Initialized")
 
         self.model = self._build_model()
