@@ -1,51 +1,37 @@
-name: Create PR from template update
+name: Pull updates from template repo
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  sync:
+  sync-template:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout this repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Needed for proper merging
 
       - name: Set up Git config
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Add template as remote
+      - name: Add template remote and fetch
         run: |
           git remote add template https://github.com/sunny1401/training_template.git
-          git fetch template
+          git fetch template main
 
-      - name: Create sync branch and merge template
+      - name: Create update branch and merge template
         run: |
           git checkout -b update-from-template
           git merge template/main --allow-unrelated-histories || true
           git add -A || true
-          git commit -m "WIP: merge from template (may contain conflicts)" || true
+          git commit -m "Merge updates from template repo" || true
 
       - name: Push update branch
         run: git push origin update-from-template --force
-
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Update from template"
-          body: |
-            This PR merges the latest changes from the template repository.
-            Please resolve any merge conflicts in the GitHub UI.
-          base: main
-          branch: update-from-template
-          delete-branch: false
-          skip-if-empty: false
